@@ -1,7 +1,8 @@
 import User from "../model/userModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
-import createToken from "../utils/createToken.js";
+import { revokeRefreshToken, createAuthTokens, createToken } from "../utils/authToken.js";
+import jwt from "jsonwebtoken";
 
 const createUser = asyncHandler(async (req, res) => {
   const { username, email, password, isAdmin } = req.body;
@@ -26,7 +27,7 @@ const createUser = asyncHandler(async (req, res) => {
 
   try {
     await newUser.save();
-    createToken(res, newUser._id);
+    const accessToken = await createAuthTokens(res, newUser._id);
 
     res.status(201).json({
       _id: newUser._id,
@@ -54,8 +55,11 @@ const loginUser = asyncHandler(async (req, res) => {
   if (findUser) {
     try {
       const match = await bcrypt.compare(password, findUser.password);
+
       if (match) {
-        createToken(res, findUser._id);
+        console.log(match);
+        console.log(findUser._id);
+        await createAuthTokens(res, findUser._id);
 
         res.status(200).json({
           _id: findUser._id,
@@ -77,11 +81,40 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
-  res.cookie("jwt", "", {
-    httpOnly: true,
-    expires: new Date(0),
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    throw new Error("No refresh token");
+  }
+
+  const storedToken = await RefreshToken.findOne({
+    token: refreshToken,
   });
+
+  if (!storedToken || storedToken.expires < Date.now()) {
+    return res.status(403).json({ message: "Refresh token expired or invalid" });
+  }
+
+  try {
+    const decode = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const newAccesToken = createToken(res, decode.user_id);
+
+    res.status(200).json({ accesToken: newAccesToken });
+  } catch (error) {
+    res.status(401).json({ message: "Invalid refresh token" });
+  }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    throw new Error("No refresh token");
+  }
+
+  await revokeRefreshToken(refreshToken);
+  res.clearCookie("refreshToken");
 
   res.status(200).json({ message: "Logged out successfully" });
 });
@@ -120,7 +153,9 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
       user.email = email || user.email;
 
       if (req.body.password) {
-        user.password = req.body.password;
+        const salt = await bcrypt.genSaltSync(10);
+        const hash = await bcrypt.hashSync(req.body.password, salt);
+        user.password = hash;
       }
 
       const updatedUser = await user.save();
@@ -134,7 +169,9 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
     } catch (error) {
       throw new Error("Invalid user data");
     }
+  } else {
+    throw new Error("User not found");
   }
 });
 
-export { createUser, loginUser, logoutUser, getAllUsers, getCurrentProfileUser, updateCurrentUserProfile };
+export { createUser, loginUser, logoutUser, refreshAccessToken, getAllUsers, getCurrentProfileUser, updateCurrentUserProfile };

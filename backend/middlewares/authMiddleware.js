@@ -3,11 +3,11 @@ import asyncHandler from "./asyncHandler.js";
 import User from "../model/userModel.js";
 
 const authenticate = asyncHandler(async (req, res, next) => {
-  let token = req.cookies.jwt;
+  let token = req.cookies.refreshToken;
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
       console.log("ini adlaah" + decoded.user_id);
       req.user = await User.findById(decoded.user_id).select("-password");
       next();
