@@ -7,9 +7,9 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret");
-      console.log("ini adlaah" + decoded.user_id);
-      req.user = await User.findById(decoded.user_id).select("-password");
+      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || "secret");
+      console.log("ini adlaah" + decoded.userId);
+      req.user = await User.findById(decoded.userId).select("-password");
       next();
     } catch (error) {
       res.status(401);

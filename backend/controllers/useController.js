@@ -46,10 +46,6 @@ const createUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    throw new Error("Please add all fields");
-  }
-
   const findUser = await User.findOne({ email });
 
   if (findUser) {
