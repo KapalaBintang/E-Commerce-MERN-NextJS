@@ -1,37 +1,47 @@
 import jwt from "jsonwebtoken";
 import RefreshToken from "../model/refreshTokenModel.js";
+import bcrypt from "bcryptjs";
 
-const createToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || "secret", {
-    expiresIn: "15m",
+const createToken = (userId, isAdmin) => {
+  return jwt.sign({ id: userId, isAdmin: isAdmin }, process.env.JWT_SECRET || "secret", {
+    expiresIn: "30d",
   });
 };
 
-const createAuthTokens = async (res, userId) => {
-  const accesToken = createToken(userId);
+const createAuthTokens = async (res, userId, isAdmin) => {
+  try {
+    const accessToken = createToken(userId, isAdmin);
 
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: "7d",
-  });
+    const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: "7d",
+    });
 
-  const expires = new Date();
-  expires.setDate(expires.getDate() + 7);
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 7);
 
-  const newRefreshToken = new RefreshToken({
-    userId,
-    token: refreshToken,
-    expires,
-  });
+    console.log(expires);
 
-  await newRefreshToken.save();
+    const salt = await bcrypt.genSalt(10);
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+    const newRefreshToken = new RefreshToken({
+      userId,
+      token: hashedRefreshToken,
+      expires,
+    });
 
-  return accesToken;
+    await newRefreshToken.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return { accessToken };
+  } catch (error) {
+    throw new Error(error.message);
+  }
 };
 
 const revokeRefreshToken = async (refreshToken) => {

@@ -3,13 +3,22 @@ import asyncHandler from "./asyncHandler.js";
 import User from "../model/userModel.js";
 
 const authenticate = asyncHandler(async (req, res, next) => {
-  let token = req.cookies.refreshToken;
+  // let token = req.cookies.refreshToken;
+
+  let header = req.headers.authorization || req.headers.Authorization;
+
+  if (!header.startsWith("Bearer")) {
+    res.status(401).json({ message: "No token" });
+  }
+
+  let token = header.split(" ")[1];
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || "secret");
-      console.log("ini adlaah" + decoded.userId);
-      req.user = await User.findById(decoded.userId).select("-password");
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("ini decoded", decoded);
+      req.user = await User.findById(decoded.id).select("-password");
+      console.log("ini req.user", req.user);
       next();
     } catch (error) {
       res.status(401);

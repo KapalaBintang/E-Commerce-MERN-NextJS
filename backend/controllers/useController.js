@@ -2,10 +2,9 @@ import User from "../model/userModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import { revokeRefreshToken, createAuthTokens, createToken } from "../utils/authToken.js";
-import jwt from "jsonwebtoken";
 
 const createUser = asyncHandler(async (req, res) => {
-  const { username, email, password, isAdmin } = req.body;
+  const { username, email, password } = req.body;
   if (!username || !email || !password) {
     throw new Error("Please add all fields");
   }
@@ -27,14 +26,9 @@ const createUser = asyncHandler(async (req, res) => {
 
   try {
     await newUser.save();
-    const accessToken = await createAuthTokens(res, newUser._id);
 
     res.status(201).json({
-      _id: newUser._id,
-      username: newUser.username,
-      password: newUser.password,
-      email: newUser.email,
-      isAdmin: newUser.isAdmin,
+      message: "User created successfully",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -53,19 +47,13 @@ const loginUser = asyncHandler(async (req, res) => {
       const match = await bcrypt.compare(password, findUser.password);
 
       if (match) {
-        console.log(match);
-        console.log(findUser._id);
-        await createAuthTokens(res, findUser._id);
+        const user = await createAuthTokens(res, findUser._id, findUser.isAdmin);
+
+        console.log(user);
 
         res.status(200).json({
-          _id: findUser._id,
-          username: findUser.username,
-          password: findUser.password,
-          email: findUser.email,
-          isAdmin: findUser.isAdmin,
+          user,
         });
-
-        return;
       } else {
         res.status(400).send("Invalid credentials");
       }
@@ -74,31 +62,6 @@ const loginUser = asyncHandler(async (req, res) => {
     }
   } else {
     res.status(404).json({ message: "User not found" });
-  }
-});
-
-const refreshAccessToken = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.cookies;
-
-  if (!refreshToken) {
-    throw new Error("No refresh token");
-  }
-
-  const storedToken = await RefreshToken.findOne({
-    token: refreshToken,
-  });
-
-  if (!storedToken || storedToken.expires < Date.now()) {
-    return res.status(403).json({ message: "Refresh token expired or invalid" });
-  }
-
-  try {
-    const decode = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const newAccesToken = createToken(res, decode.user_id);
-
-    res.status(200).json({ accesToken: newAccesToken });
-  } catch (error) {
-    res.status(401).json({ message: "Invalid refresh token" });
   }
 });
 
@@ -170,4 +133,4 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-export { createUser, loginUser, logoutUser, refreshAccessToken, getAllUsers, getCurrentProfileUser, updateCurrentUserProfile };
+export { createUser, loginUser, logoutUser, getAllUsers, getCurrentProfileUser, updateCurrentUserProfile };
