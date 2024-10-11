@@ -1,10 +1,15 @@
 "use client";
+
 import React, { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { loginUser } from "@/utils/auth";
-import { setCookie } from "cookies-next";
+
+import { getCookies, setCookie } from "cookies-next";
+import { useLoginMutation } from "@/lib/redux/api/userApiSlice";
+import { setCookies } from "@/app/actions";
+import { json } from "stream/consumers";
 
 function LoginPage() {
   const [formData, setFormData] = useState({
@@ -12,7 +17,10 @@ function LoginPage() {
     password: "",
   });
 
+  const [loginUser, { isLoading, isError }] = useLoginMutation();
+
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -20,14 +28,15 @@ function LoginPage() {
     if (!formData.email || !formData.password) return null;
 
     try {
-      const data = await loginUser(formData);
+      const data = await loginUser(formData).unwrap();
+      console.log(data);
 
-      setCookie("token", data.accessToken.accessToken, {
-        maxAge: 15 * 60,
-      });
+      await setCookies("user", JSON.stringify(data));
 
-      setCookie("isAdmin", data.isAdmin, {
-        maxAge: 15 * 60,
+      toast({
+        title: "Login success",
+        description: "Welcome back!",
+        variant: "success",
       });
 
       if (!data.isAdmin) {
@@ -37,7 +46,12 @@ function LoginPage() {
 
       router.push("/admin");
     } catch (error: any) {
-      alert(error.message);
+      console.log(error.message);
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
     }
 
     setFormData({ email: "", password: "" });
@@ -92,9 +106,16 @@ function LoginPage() {
                       }}
                     />
                   </div>
+                  {isError && (
+                    <p className="pb-2 text-red-500">Invalid credentials</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full bg-orange-600">
-                  Login
+                <Button
+                  type="submit"
+                  className="w-full bg-orange-600"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : "Login"}
                 </Button>
               </form>
             </div>

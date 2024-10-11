@@ -15,6 +15,10 @@ const refreshToken = asyncHandler(async (req, res) => {
   console.log("ini rftkn", refreshToken);
   console.log("ini storedToken", storedToken);
 
+  if (!storedToken) {
+    return res.status(403).json({ message: "Invalid refresh token" });
+  }
+
   const isRefreshTokenValid = await bcrypt.compare(refreshToken, storedToken.token);
 
   if (!isRefreshTokenValid) {
@@ -23,6 +27,11 @@ const refreshToken = asyncHandler(async (req, res) => {
 
   try {
     const decode = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    if (!decode) {
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+
     const accessToken = jwt.sign({ userId: decode.userId, isAdmin: decode.isAdmin }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });

@@ -2,15 +2,15 @@ import jwt from "jsonwebtoken";
 import RefreshToken from "../model/refreshTokenModel.js";
 import bcrypt from "bcryptjs";
 
-const createToken = (userId, isAdmin) => {
-  return jwt.sign({ id: userId, isAdmin: isAdmin }, process.env.JWT_SECRET || "secret", {
+const createToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || "secret", {
     expiresIn: "30d",
   });
 };
 
 const createAuthTokens = async (res, userId, isAdmin) => {
   try {
-    const accessToken = createToken(userId, isAdmin);
+    const accessToken = createToken(userId);
 
     const refreshToken = jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, {
       expiresIn: "7d",

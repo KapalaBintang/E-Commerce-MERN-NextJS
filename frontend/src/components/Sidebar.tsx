@@ -49,7 +49,9 @@ function Sidebar() {
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="p-5">Admin Page</div>
+        <div className="after: p-5 text-xl font-bold text-blue-400">
+          Admin Page
+        </div>
         <div className="px-7 py-3">
           <Link
             href={"/admin"}
