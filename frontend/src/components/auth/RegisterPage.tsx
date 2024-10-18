@@ -1,9 +1,11 @@
 "use client";
-import { registerUser } from "@/utils/auth";
+// import { registerUser } from "@/utils/auth";
+import { useRegisterMutation } from "@/lib/redux/api/userApiSlice";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -12,19 +14,26 @@ function RegisterPage() {
     password: "",
   });
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [registerUser, { isLoading, isError }] = useRegisterMutation();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!formData.username || !formData.email || !formData.password) {
-      alert("Please add all fields");
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
       return null;
     }
     try {
-      await registerUser(formData);
+      await registerUser(formData).unwrap();
       setFormData({ username: "", email: "", password: "" });
       router.push("/login");
     } catch (error: any) {
-      alert(error.message);
+      console.log(error.message);
     }
   };
 
@@ -42,6 +51,7 @@ function RegisterPage() {
                   <label htmlFor="username">Username</label>
                   <Input
                     type="text"
+                    value={formData.username}
                     id="username"
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500/25 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                     onChange={(e) =>
@@ -54,6 +64,7 @@ function RegisterPage() {
                   <label htmlFor="email">Email</label>
                   <Input
                     type="email"
+                    value={formData.email}
                     id="email"
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500/25 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                     onChange={(e) =>
@@ -66,6 +77,7 @@ function RegisterPage() {
                   <label htmlFor="password">Password</label>
                   <Input
                     type="password"
+                    value={formData.password}
                     id="password"
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500/25 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                     placeholder="Enter your password"
@@ -74,6 +86,9 @@ function RegisterPage() {
                     }}
                   />
                 </div>
+
+                {isLoading && <p>Loading...</p>}
+                {isError && <p className="text-destructive">Error</p>}
               </div>
               <Button type="submit" className="w-full bg-orange-600">
                 Register

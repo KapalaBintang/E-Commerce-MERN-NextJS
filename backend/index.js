@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 8000;
 const app = express();
 
 const corsOptions = {
-  origin: "http://localhost:3000", // Sesuaikan dengan asal request frontend kamu
+  origin: "http://localhost:3000", 
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Authorization", "Content-Type"],
   credentials: true,

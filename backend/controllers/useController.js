@@ -49,9 +49,10 @@ const loginUser = asyncHandler(async (req, res) => {
       if (match) {
         const user = await createAuthTokens(res, findUser._id);
 
-        console.log(user);
+        // console.log(user);
 
         res.status(200).json({
+          id: findUser._id,
           user,
           username: findUser.username,
           isAdmin: findUser.isAdmin,
@@ -69,15 +70,23 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
   const { refreshToken } = req.cookies;
+  console.log("ini refresh token", refreshToken);
 
   if (!refreshToken) {
-    throw new Error("No refresh token");
+    return res.status(400).json({ message: "No refresh token found" });
   }
 
-  await revokeRefreshToken(refreshToken);
-  res.clearCookie("refreshToken");
+  try {
+    await revokeRefreshToken(refreshToken);
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === "production", // Set secure cookie in production
+    });
 
-  res.status(200).json({ message: "Logged out successfully" });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
@@ -87,14 +96,13 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
 const getCurrentProfileUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
+  console.log("ini user", user);
 
   if (user) {
     try {
       res.json({
-        _id: user._id,
         username: user.username,
         email: user.email,
-        isAdmin: user.isAdmin,
       });
     } catch (error) {
       throw new Error("Invalid user data");

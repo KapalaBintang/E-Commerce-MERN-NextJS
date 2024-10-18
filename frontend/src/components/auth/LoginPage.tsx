@@ -5,11 +5,10 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { getCookies, setCookie } from "cookies-next";
 import { useLoginMutation } from "@/lib/redux/api/userApiSlice";
 import { setCookies } from "@/app/actions";
-import { json } from "stream/consumers";
 
 function LoginPage() {
   const [formData, setFormData] = useState({

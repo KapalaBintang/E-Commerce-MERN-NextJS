@@ -4,11 +4,11 @@ import bcrypt from "bcryptjs";
 
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET || "secret", {
-    expiresIn: "30d",
+    expiresIn: "30m",
   });
 };
 
-const createAuthTokens = async (res, userId, isAdmin) => {
+const createAuthTokens = async (res, userId) => {
   try {
     const accessToken = createToken(userId);
 
@@ -16,18 +16,9 @@ const createAuthTokens = async (res, userId, isAdmin) => {
       expiresIn: "7d",
     });
 
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
-
-    console.log(expires);
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, salt);
-
     const newRefreshToken = new RefreshToken({
       userId,
-      token: hashedRefreshToken,
-      expires,
+      token: refreshToken,
     });
 
     await newRefreshToken.save();
@@ -35,7 +26,8 @@ const createAuthTokens = async (res, userId, isAdmin) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return { accessToken };
@@ -45,7 +37,25 @@ const createAuthTokens = async (res, userId, isAdmin) => {
 };
 
 const revokeRefreshToken = async (refreshToken) => {
-  await RefreshToken.findOneAndDelete({ token: refreshToken });
+  console.log("ini refresh token revoke", refreshToken);
+  try {
+    // Verifikasi refresh token dengan JWT
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    // console.log("ini decoded", decoded);
+
+    const foundToken = await RefreshToken.findOne({ userId: decoded.userId });
+    // console.log("ini foundToken", foundToken);
+    // console.log("ini refresh token", refreshToken);
+
+    if (!foundToken) {
+      throw new Error("Invalid refresh token");
+    }
+
+    // Hapus refresh token dari database
+    await RefreshToken.deleteOne({ _id: foundToken._id });
+  } catch (error) {
+    throw new Error("Invalid refresh token");
+  }
 };
 
 export { createToken, createAuthTokens, revokeRefreshToken };

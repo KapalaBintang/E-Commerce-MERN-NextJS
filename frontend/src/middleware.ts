@@ -5,6 +5,11 @@ import jwt from "jsonwebtoken";
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
   const getUserCookie = request.cookies.get("user");
+
+  if (!getUserCookie) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   const user = JSON.parse(getUserCookie?.value || "{}");
 
   if (!user.user.accessToken) {
@@ -22,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/coba/:path*", "/admin/:path*"],
+  matcher: ["/admin/:path*", "/profile/:path*"],
 };

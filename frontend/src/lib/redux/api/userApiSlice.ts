@@ -9,6 +9,7 @@ export const userApiSlice = apiSlice.injectEndpoints({
         url: `${USERS_URL}/login`,
         method: "POST",
         body: credentials,
+        credentials: "include",
       }),
     }),
 
@@ -26,6 +27,7 @@ export const userApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: `${USERS_URL}/logout`,
         method: "POST",
+        credentials: "include",
       }),
     }),
 
@@ -68,13 +70,14 @@ export const userApiSlice = apiSlice.injectEndpoints({
 
     // GET USER BY ID
     getUserById: builder.query({
-      query: ({ id, accessToken }) => ({
-        url: `${USERS_URL}/${id}`,
+      query: ({ accessToken }) => ({
+        url: `${USERS_URL}/profile`,
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
+        credentials: "include",
       }),
     }),
 

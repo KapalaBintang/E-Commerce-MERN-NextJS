@@ -7,8 +7,10 @@ const authenticate = asyncHandler(async (req, res, next) => {
 
   let header = req.headers.authorization || req.headers.Authorization;
 
-  if (!header.startsWith("Bearer")) {
-    res.status(401).json({ message: "No token" });
+  if (!header) {
+    res.status(401).json({
+      message: "something went wrong!",
+    });
   }
 
   let token = header.split(" ")[1];
@@ -17,7 +19,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       console.log("ini decoded", decoded);
-      req.user = await User.findById(decoded.id).select("-password");
+      req.user = await User.findById(decoded.userId).select("-password");
       console.log("ini req.user", req.user);
       next();
     } catch (error) {
