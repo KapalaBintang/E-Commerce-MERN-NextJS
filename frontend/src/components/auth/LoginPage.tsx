@@ -122,7 +122,7 @@ function LoginPage() {
         </div>
         <div className="hidden xl:block xl:w-1/2">
           <img
-            src="form_image.jpg"
+            src="/images/form_image.jpg"
             alt=""
             className="h-full w-full object-cover"
           />

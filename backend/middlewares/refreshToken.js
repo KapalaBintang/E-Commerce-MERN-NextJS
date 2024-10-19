@@ -1,27 +1,19 @@
 import jwt from "jsonwebtoken";
 import asyncHandler from "./asyncHandler.js";
 import RefreshToken from "../model/refreshTokenModel.js";
-import bcrypt from "bcryptjs";
 
 const refreshToken = asyncHandler(async (req, res) => {
   const { refreshToken } = req.cookies;
-  const { userId } = req.params;
 
   if (!refreshToken) {
     throw new Error("No refresh token");
   }
 
-  const storedToken = await RefreshToken.findOne({ userId });
-  console.log("ini rftkn", refreshToken);
+  const storedToken = await RefreshToken.findOne({ token: refreshToken });
+
   console.log("ini storedToken", storedToken);
 
   if (!storedToken) {
-    return res.status(403).json({ message: "Invalid refresh token" });
-  }
-
-  const isRefreshTokenValid = await bcrypt.compare(refreshToken, storedToken.token);
-
-  if (!isRefreshTokenValid) {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 
@@ -32,9 +24,11 @@ const refreshToken = asyncHandler(async (req, res) => {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
-    const accessToken = jwt.sign({ userId: decode.userId, isAdmin: decode.isAdmin }, process.env.JWT_SECRET, {
+    const accessToken = jwt.sign({ userId: decode.userId }, process.env.JWT_SECRET, {
       expiresIn: "15m",
     });
+
+    console.log("ini accessToken", accessToken);
 
     res.status(200).json({ accessToken });
   } catch (error) {

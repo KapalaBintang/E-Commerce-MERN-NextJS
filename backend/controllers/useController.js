@@ -55,6 +55,7 @@ const loginUser = asyncHandler(async (req, res) => {
           id: findUser._id,
           user,
           username: findUser.username,
+          email: findUser.email,
           isAdmin: findUser.isAdmin,
         });
       } else {
@@ -130,10 +131,8 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
       const updatedUser = await user.save();
 
       res.status(200).json({
-        _id: updatedUser._id,
         username: updatedUser.username,
         email: updatedUser.email,
-        isAdmin: updatedUser.isAdmin,
       });
     } catch (error) {
       throw new Error("Invalid user data");

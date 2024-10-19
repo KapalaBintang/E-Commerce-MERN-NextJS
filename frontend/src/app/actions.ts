@@ -4,9 +4,11 @@ import { cookies } from "next/headers";
 
 export async function setCookies(name: string, value: any) {
   cookies().set(name, value, {
+    path: "/",
     httpOnly: true,
-    maxAge: 900,
+    secure: true,
     sameSite: "strict",
+    maxAge: 15 * 60,
   });
 }
 

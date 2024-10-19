@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.route("/").post(createUser).get(authenticate, authorizeAdmin, getAllUsers);
 router.post("/login", loginUser);
-router.get("/:userId/refresh-token", refreshToken);
+router.get("/refresh-token", refreshToken);
 router.post("/logout", logoutUser);
 router.route("/profile").get(authenticate, getCurrentProfileUser).put(authenticate, updateCurrentUserProfile);
 

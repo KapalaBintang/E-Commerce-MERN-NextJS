@@ -1,7 +1,7 @@
-export const metadata = {
-  title: "Authentication",
-  description: "Authentication",
-};
+// export const metadata = {
+//   title: "Authentication",
+//   description: "Authentication",
+// };
 
 import { Poppins } from "next/font/google";
 
@@ -12,9 +12,5 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en" className={inter.className}>
-      <body>{children}</body>
-    </html>
-  );
+  return <section className={inter.className}>{children}</section>;
 }

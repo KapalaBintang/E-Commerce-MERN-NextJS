@@ -1,4 +1,4 @@
-import Sidebar from "@/components/sidebar/Sidebar";
+import Sidebar from "@/lib/sidebar/Sidebar";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
